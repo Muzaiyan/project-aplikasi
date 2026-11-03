@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <h1>Dashboard</h1>
+    <p>Ringkasan seluruh hasil deteksi kerusakan jalan.</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card stat dark"><span>Total analisis</span><strong>{{ stats.total_scans }}</strong><small>gambar diproses</small></div>
+    <div class="card stat"><span>Total kerusakan</span><strong>{{ stats.total_damage }}</strong><small>objek terdeteksi</small></div>
+    <div class="card stat"><span>Kondisi berat</span><strong style="color:var(--sev-3)">{{ stats.worst }}</strong><small>gambar tingkat berat</small></div>
+    <div class="card stat"><span>Rata-rata proses</span><strong>{{ stats.avg_ms|round|int }}<small style="font-size:16px"> ms</small></strong><small>per gambar</small></div>
+  </div>
+
+  {% if stats.total_scans %}
+  <div id="dashData" hidden data-stats='{{ {"trend": stats.trend, "by_class": stats.by_class, "by_sev": stats.by_sev}|tojson }}'></div>
+  <div class="charts">
+    <div class="card chart-box">
+      <h3>Aktivitas 14 hari terakhir</h3>
+      <div class="chart-wrap"><div id="trendChart" class="svg-chart"></div></div>
+    </div>
+    <div class="card chart-box">
+      <h3>Kelas terdeteksi</h3>
+      <div class="chart-wrap"><div id="classChart" class="class-chart"></div></div>
+    </div>
+  </div>
+
+  <div class="charts-2">
+    <div class="card chart-box">
+      <h3>Tingkat keparahan</h3>
+      <div class="chart-wrap"><div id="sevChart" class="svg-chart"></div></div>
+    </div>
+    <div class="card chart-box">
+      <h3>Analisis terbaru</h3>
+      <table class="tbl">
+        <thead><tr><th>File</th><th>Temuan</th><th>Tingkat</th><th>Waktu</th></tr></thead>
+        <tbody>
+          {% for r in stats.recent %}
+          <tr class="row-link" data-href="{{ url_for('detail', det_id=r.id) }}">
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.original_name }}</td>
+            <td class="mono">{{ r.total }}</td>
+            <td><span class="badge s{{ r.severity }}">{{ r.severity_label }}</span></td>
+            <td class="muted" style="font-size:13px">{{ r.created_dt|tgl }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty" style="margin-top:24px">
+    <h3>Belum ada data untuk ditampilkan</h3>
+    <p>Grafik akan muncul setelah Anda menganalisis gambar pertama.</p>
+    <a class="btn btn-primary" style="margin-top:20px" href="{{ url_for('index') }}">Deteksi sekarang</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Hasil #{{ d.id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <a class="crumb" href="{{ url_for('history') }}">← Kembali ke riwayat</a>
+    <h1 style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      Hasil deteksi
+      <span class="badge lg s{{ d.severity }}">{{ d.severity_label }}</span>
+    </h1>
+    <p>{{ d.original_name }} · {{ d.created_dt|tgl }}</p>
+  </div>
+
+  <div class="detail-grid">
+    <div>
+      <div class="card card-pad">
+        <div class="view-switch" role="tablist">
+          <button class="on" data-view="compare">Bandingkan</button>
+          <button data-view="result">Hasil</button>
+          <button data-view="original">Asli</button>
+        </div>
+
+        <div class="compare" id="compare" data-mode="compare">
+          <img src="{{ url_for('uploads', filename=d.image_file) }}" alt="Gambar asli" id="imgBefore">
+          <div class="after" id="afterLayer"><img src="{{ url_for('results', filename=d.result_file) }}" alt="Hasil deteksi"></div>
+          <div class="handle" id="handle"></div>
+          <span class="tag l" id="tagL">Asli</span>
+          <span class="tag r" id="tagR">Deteksi</span>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-dark btn-sm" href="{{ url_for('download', det_id=d.id) }}">Unduh hasil</a>
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('index') }}">Analisis gambar lain</a>
+          <form method="post" action="{{ url_for('delete', det_id=d.id) }}" data-confirm="Hapus data deteksi ini secara permanen?" style="margin-left:auto">
+            <button class="btn btn-danger btn-sm" type="submit">Hapus</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <aside style="display:grid;gap:20px">
+      <div class="card card-pad">
+        <h3 style="font-size:20px">Ringkasan</h3>
+        <div class="kv">
+          <div><span>Temuan</span><strong>{{ d.total }}</strong></div>
+          <div><span>Tingkat</span><strong>{{ d.severity_label }}</strong></div>
+          <div><span>Resolusi</span><strong style="font-size:18px">{{ d.width }}×{{ d.height }}</strong></div>
+          <div><span>Waktu proses</span><strong>{{ '%.0f'|format(d.inference_ms) }} ms</strong></div>
+        </div>
+
+        {% set advice = {
+          0: ('Permukaan tampak baik', 'Model tidak menemukan kerusakan pada gambar ini. Ini bukan jaminan jalan aman; coba foto dari sudut lain atau periksa langsung di lapangan.'),
+          1: ('Pemantauan rutin', 'Kerusakan masih ringan. Jadwalkan pemeliharaan preventif seperti penutupan retak (crack sealing).'),
+          2: ('Perlu perbaikan terjadwal', 'Kerusakan berkembang. Rencanakan perbaikan lokal sebelum air masuk dan memperparah kondisi.'),
+          3: ('Prioritas penanganan', 'Kerusakan luas atau berisiko bagi pengguna jalan. Disarankan survei lapangan dan perbaikan segera.')
+        } %}
+        <div class="advice">
+          <strong>{{ advice[d.severity][0] }}</strong>
+          {{ advice[d.severity][1] }}
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <h3 style="font-size:20px;margin-bottom:10px">Rincian temuan</h3>
+        {% if d.boxes %}
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>Jenis</th><th>Keyakinan</th><th>Tingkat</th></tr></thead>
+            <tbody>
+              {% for it in d.boxes %}
+              <tr>
+                <td><span class="chip" style="--c: {{ color_of(it.cls) }}"><i></i>{{ it.label }}</span></td>
+                <td class="mono"><span class="bar"><i data-w="{{ (it.confidence * 100)|round|int }}"></i></span>{{ (it.confidence * 100)|round|int }}%</td>
+                <td><span class="badge s{{ it.severity }}">{{ it.severity_label }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+          <p class="muted">Tidak ada kerusakan yang terdeteksi.</p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initCompare();</script>
+{% endblock %}

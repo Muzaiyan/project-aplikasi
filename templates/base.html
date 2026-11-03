@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Deteksi Jalan Rusak{% endblock %} · RoadScan</title>
+  <meta name="description" content="Sistem deteksi kerusakan jalan berbasis YOLO: retak memanjang, retak melintang, retak buaya, dan lubang.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2315171c'/%3E%3Cpath d='M32 10v10M32 27v10M32 44v10' stroke='%23f59e0b' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="{{ url_for('index') }}" class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>RoadScan<small>Deteksi Jalan Rusak</small></span>
+      </a>
+
+      <nav class="nav-links" id="navLinks" aria-label="Navigasi utama">
+        <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Deteksi</a>
+        <a href="{{ url_for('history') }}" class="{{ 'active' if request.endpoint in ('history', 'detail') }}">Riwayat</a>
+        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="model-chip {{ '' if model_ready else 'off' }}" title="Status model YOLO">
+          <i></i><span class="t">{{ 'Model siap' if model_ready else 'Model belum ada' }}</span>
+        </span>
+        <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container flashes">
+          {% for cat, msg in messages %}
+            <div class="flash {{ cat }}" role="alert">
+              <span>{{ msg }}</span>
+              <button type="button" aria-label="Tutup" onclick="this.parentElement.remove()">×</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}
+      {% if not_found %}
+        <div class="container section" style="text-align:center">
+          <p class="eyebrow" style="justify-content:center">Error 404</p>
+          <h1 style="font-size:56px;margin:14px 0">Jalan ini buntu.</h1>
+          <p class="muted">Halaman yang Anda cari tidak ditemukan.</p>
+          <a class="btn btn-dark" style="margin-top:24px" href="{{ url_for('index') }}">Kembali ke beranda</a>
+        </div>
+      {% endif %}
+    {% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <span>© {{ now_year }} RoadScan — Sistem Deteksi Jalan Rusak berbasis YOLO</span>
+      <span>Flask · Ultralytics YOLO · OpenCV</span>
+    </div>
+  </footer>
+
+  <div class="overlay" id="overlay" aria-live="polite">
+    <div>
+      <div class="road-loader"></div>
+      <h3>Menganalisis permukaan jalan…</h3>
+      <p>Model YOLO sedang mencari retak dan lubang.</p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

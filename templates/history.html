@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Riwayat{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <h1>Riwayat deteksi</h1>
+    <p>{{ total }} analisis tersimpan{% if q or sev %} sesuai filter{% endif %}.</p>
+  </div>
+
+  <form class="filters" method="get" action="{{ url_for('history') }}">
+    <input class="input grow" type="search" name="q" value="{{ q }}" placeholder="Cari nama file…">
+    <select class="input" name="severity" onchange="this.form.submit()">
+      <option value="">Semua tingkat</option>
+      {% for i in range(4) %}
+        <option value="{{ i }}" {{ 'selected' if sev == i|string }}>{{ SEVERITY_LABELS[i] }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-dark btn-sm" type="submit">Terapkan</button>
+    {% if q or sev %}<a class="btn btn-ghost btn-sm" href="{{ url_for('history') }}">Reset</a>{% endif %}
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('export_csv') }}" style="margin-left:auto">Ekspor CSV</a>
+  </form>
+
+  {% if items %}
+    <div class="grid grid-4">
+      {% for r in items %}
+      <a class="card scan-card" href="{{ url_for('detail', det_id=r.id) }}">
+        <div class="scan-thumb">
+          <img src="{{ url_for('results', filename=r.result_file) }}" alt="Hasil {{ r.original_name }}" loading="lazy">
+          <span class="badge s{{ r.severity }}">{{ r.severity_label }}</span>
+        </div>
+        <div class="scan-body">
+          <h4 title="{{ r.original_name }}">{{ r.original_name }}</h4>
+          <div class="scan-meta"><span>{{ r.total }} temuan</span><span>{{ r.created_dt|tgl }}</span></div>
+          {% if r.summary %}
+          <div class="chips">
+            {% for cls, n in r.summary.items() %}
+              <span class="chip" style="--c: {{ color_of(cls) }}"><i></i>{{ label_of(cls) }} × {{ n }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    {% if pages > 1 %}
+    <nav class="pager" aria-label="Halaman">
+      {% set args = {'q': q, 'severity': sev} %}
+      {% if page > 1 %}<a href="{{ url_for('history', page=page-1, **args) }}">← Sebelumnya</a>{% else %}<span class="off">← Sebelumnya</span>{% endif %}
+      <span class="cur">{{ page }} / {{ pages }}</span>
+      {% if page < pages %}<a href="{{ url_for('history', page=page+1, **args) }}">Berikutnya →</a>{% else %}<span class="off">Berikutnya →</span>{% endif %}
+    </nav>
+    {% endif %}
+  {% else %}
+    <div class="empty">
+      <h3>Belum ada data</h3>
+      <p>{% if q or sev %}Tidak ada hasil untuk filter ini.{% else %}Mulai dengan mengunggah gambar jalan pertama Anda.{% endif %}</p>
+      <a class="btn btn-primary" style="margin-top:20px" href="{{ url_for('index') }}">Deteksi sekarang</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

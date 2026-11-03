@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Deteksi{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="reveal">
+      <span class="eyebrow">Computer Vision · YOLO</span>
+      <h1>Temukan kerusakan jalan <em>di Aceh utara</em> Sebelum menjadi bahaya.</h1>
+      <p class="lead">Unggah foto permukaan jalan dan biarkan model YOLO menandai area kerusakan seperti retak dan lubang — lengkap dengan estimasi tingkat keparahan.</p>
+      <div class="hero-stats">
+        <div><strong>{{ CLASS_INFO|length }}</strong><span>Kelas deteksi</span></div>
+        <div><strong>4</strong><span>Tingkat kondisi</span></div>
+        <div><strong>YOLO</strong><span>Deteksi objek</span></div>
+      </div>
+    </div>
+
+    <form class="upload-card reveal d2" id="uploadForm" action="{{ url_for('detect') }}" method="post" enctype="multipart/form-data">
+      <h2>Analisis gambar baru</h2>
+      <p class="muted" style="font-size:14px">JPG, PNG, BMP atau WEBP · maksimal 16 MB</p>
+
+      <label class="dropzone" id="dropzone">
+        <input type="file" name="image" id="fileInput" accept="image/jpeg,image/png,image/bmp,image/webp" required>
+        <img class="preview" id="preview" alt="Pratinjau gambar">
+        <div class="dz-text">
+          <div class="dz-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          </div>
+          <strong>Tarik &amp; lepas gambar di sini</strong>
+          <small>atau klik untuk memilih file</small>
+        </div>
+        <span class="dz-name" id="dzName"></span>
+      </label>
+
+
+      {% if not model_ready %}
+        <div class="warn-box">
+          Model belum tersedia. Latih dulu dengan <code>python training/train.py</code>
+          atau letakkan <code>best.pt</code> di folder <code>models/</code>.
+        </div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary" id="submitBtn" {{ '' if model_ready else 'disabled' }}>
+        Mulai deteksi
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+      </button>
+    </form>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Cara kerja</span>
+        <h2 style="margin-top:12px">Tiga langkah, satu hasil jelas.</h2>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="num">01</div><h3>Unggah foto</h3><p>Pilih foto jalan dari kamera, drone, atau dashcam. Orientasi dan ukuran gambar disesuaikan otomatis.</p></div>
+      <div class="step"><div class="num">02</div><h3>YOLO menganalisis</h3><p>Model mencari pola kerusakan dan menggambar kotak pembatas beserta tingkat keyakinan tiap temuan.</p></div>
+      <div class="step"><div class="num">03</div><h3>Tinjau &amp; simpan</h3><p>Bandingkan sebelum–sesudah, lihat tingkat keparahan, lalu hasilnya tersimpan di riwayat dan dashboard.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Kelas deteksi</span>
+        <h2 style="margin-top:12px">Yang dikenali model.</h2>
+      </div>
+    </div>
+    <div class="legend-grid">
+      {% set desc = {
+        'damage': 'Area permukaan jalan yang rusak: retak, lubang, atau pelapukan aspal.',
+        'longitudinal_crack': 'Retakan sejajar arah lalu lintas, sering di sambungan lajur.',
+        'transverse_crack': 'Retakan tegak lurus arah jalan, melintasi lebar perkerasan.',
+        'alligator_crack': 'Jaringan retak saling terhubung menyerupai kulit buaya; tanda kelelahan struktur.',
+        'pothole': 'Cekungan atau lubang akibat terkelupasnya lapisan aspal.'
+      } %}
+      {% for key, info in CLASS_INFO.items() %}
+        <div class="legend-card" style="--c: {{ info.color }}">
+          <h4>{{ info.label }}</h4>
+          <p>{{ desc.get(key, "") }}</p>
+          <code>{{ key }}</code>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% if recent %}
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Terbaru</span>
+        <h2 style="margin-top:12px">Analisis terakhir.</h2>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('history') }}">Lihat semua riwayat</a>
+    </div>
+    <div class="grid grid-4">
+      {% for r in recent %}
+      <a class="card scan-card" href="{{ url_for('detail', det_id=r.id) }}">
+        <div class="scan-thumb">
+          <img src="{{ url_for('results', filename=r.result_file) }}" alt="Hasil {{ r.original_name }}" loading="lazy">
+          <span class="badge s{{ r.severity }}">{{ r.severity_label }}</span>
+        </div>
+        <div class="scan-body">
+          <h4>{{ r.original_name }}</h4>
+          <div class="scan-meta"><span>{{ r.total }} temuan</span><span>{{ r.created_dt|tgl }}</span></div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

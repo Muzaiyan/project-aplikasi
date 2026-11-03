@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Data & artefak (besar / spesifik mesin)
+instance/*
+!instance/.gitkeep
+uploads/*
+!uploads/.gitkeep
+results/*
+!results/.gitkeep
+models/*
+!models/.gitkeep
+training/runs/
+dataset/images/*/*
+dataset/labels/*/*
+!dataset/images/*/.gitkeep
+!dataset/labels/*/.gitkeep
+*.cache
+*.pt
+*.onnx
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store

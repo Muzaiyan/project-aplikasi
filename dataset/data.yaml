@@ -1,0 +1,10 @@
+# Konfigurasi dataset format YOLO (Roboflow "Road Damage", 1 kelas).
+# 'path' diganti otomatis menjadi path absolut oleh train.py / evaluate.py.
+path: .
+train: images/train
+val: images/val
+test: images/test
+
+nc: 1
+names:
+  0: damage   # kerusakan jalan (retak / lubang / dll.)
